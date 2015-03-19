@@ -1,16 +1,20 @@
 (ns bowling.core)
 
-(defn- to-frames [remaining [frame & frames]]
+(defn- strike? [remaining]
+  (= 10 (first remaining)))
+
+(defn- spare?  [remaining]
+  (= 10 (+ (first remaining) (second remaining))))
+
+(defn- to-frames [remaining frames]
   (if (empty? remaining)
-    (conj frames frame)
-  (cond (= '(10) frame)
-        (to-frames remaining (conj frames (conj frame (first remaining) (second remaining)) '()))
-        (= 10 (apply + frame))
-        (to-frames remaining (conj frames (conj frame (first remaining)) '()))
-        (= 2 (count frame))
-        (to-frames remaining (conj frames frame '()))
+    frames  
+    (cond (strike? remaining) 
+        (to-frames (drop 1 remaining) (conj frames (take 3 remaining)))
+        (spare? remaining) 
+        (to-frames (drop 2 remaining) (conj frames (take 3 remaining)))
         :else
-        (to-frames (rest remaining) (conj frames (conj frame (first remaining)))))))
+        (to-frames (drop 2 remaining) (conj frames (take 2 remaining))))))
 
 (defn score [rolls]
   (apply + (flatten (take-last 10 (to-frames rolls '())))))
