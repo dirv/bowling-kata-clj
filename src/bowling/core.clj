@@ -1,15 +1,26 @@
 (ns bowling.core)
 
-(defn new-score [rolls]
-  (apply + (map-indexed (fn [i v]
-                          (cond
-                            (and (< i (- (count rolls) 2))
-                                 (= 10 v))
-                            (+ v (nth rolls (+ i 2)) (nth rolls (+ i 1)))
-                            (and (< i (- (count rolls) 2))
-                                 (= 10 (+ (nth rolls (inc i)) v)))
-                            (+ v (nth rolls (+ i 2)))
-                            :else v)) rolls)))
+(defn- strike? [remaining]
+  (= 10 (first remaining)))
 
-(defn- score [rolls]
-  (new-score (vec rolls)))
+(defn- spare? [remaining]
+  (= 10 (+ (first remaining) (second remaining))))
+
+(defn- strike-bonus [remaining]
+  (apply + (take 2 (rest remaining))))
+
+(defn- spare-bonus [remaining]
+  (nth remaining 2))
+
+(defn- roll-score [remaining]
+  (apply + (take 2 remaining)))
+
+(defn- score-frame [[remaining score]]
+  (cond
+    (strike? remaining) [(drop 1 remaining) (+ score 10 (strike-bonus remaining))]
+    (spare? remaining) [(drop 2 remaining) (+ score 10 (spare-bonus remaining))]
+    :else [(drop 2 remaining) (+ score (roll-score remaining))]))
+
+(defn score [rolls]
+  (second (nth (iterate score-frame [rolls 0]) 10)))
+
